@@ -1,45 +1,37 @@
 #! /bin/bash
+echo "okay"
 
-# terminal apps
-#pacman -S \
-      # editor
-          #neovim \
-      # file manager
-          #ranger \
-          #tmux \
-          #openssh
+pacman -S grub
 
-# Xorg
-#pacman -S xorg \
-          #xorg-server \
-          #xf86-video-intel \
-          #xorg-xrdb
+pacman -S \
+       editor
+          neovim \
+       file manager
+          ranger \
+          tmux \
+          openssh
 
-# i3wm
-#pacman -S i3-gaps\
-      # wallpaper
-          #nitrogen \
-      # power manager
-          #xfce4-power-manager \
-      # visual
-          #compton \
-          #redshift \
-      # auto-lock when suspend
-          #xss-lock \
-      # i3lock improved
-          #i3lock-color \
-      # terminal
-          #rxvt-unicode \
-      # runner
-          #rofi \
-      # browser
-          #qutebrowser \
-      # screenschots
-          #maim \
+pacman -S xorg \
+          xorg-server \
+          xf86-video-intel \
+          xorg-xrdb
 
-# messanger
-#pacman -S telegram-desktop
+pacman -S i3-gaps\
+          nitrogen \
+          xfce4-power-manager \
+          compton \
+          redshift \
+          xss-lock \
+          i3lock-color \
+          rxvt-unicode \
+          rofi \
+          qutebrowser \
+          maim \
+          arc-gtk-theme\
 
+pacman -S telegram-desktop
+
+pacman -S ntfs-3g
 
 # Set date time
 ln -sf /usr/share/zoneinfo/Asia/Vladivostok /etc/localtime

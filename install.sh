@@ -83,13 +83,15 @@ echo "Press any key to reboot or Ctrl+C to cancel..."
 read tmpvar
 reboot
 
-#
-#mount -o bind /dev /mnt/dev
-#mount -t proc none /mnt/proc
-#cp script2.sh /mnt/script2.sh
-#chroot /mnt /script2.sh
-#rm -R /mnt/configs
-#rm /mnt/install-2.sh
+
+mount -o bind /dev /mnt/dev
+mount -t proc none /mnt/proc
+cp script2.sh /mnt/script2.sh
+echo "POST chroot"
+read hello
+chroot /mnt /script2.sh
+
+rm /mnt/install-2.sh
 
 #umount /mnt/dev
 #umount /mnt/proc
