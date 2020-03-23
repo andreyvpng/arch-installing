@@ -86,12 +86,12 @@ reboot
 
 mount -o bind /dev /mnt/dev
 mount -t proc none /mnt/proc
-cp script2.sh /mnt/script2.sh
+cp post-install.sh /mnt/post-install.sh
 echo "POST chroot"
 read hello
-chroot /mnt /script2.sh
+chroot /mnt /post-install.sh
 
-rm /mnt/install-2.sh
+#rm /mnt/install-2.sh
 
 #umount /mnt/dev
 #umount /mnt/proc
