@@ -49,6 +49,14 @@ install_vm_packages() {
   pacman -S virtualbox-guest-utils xf86-video-vmware
 }
 
+install_yay() {
+  git clone https://aur.archlinux.org/yay.git
+  cd yay
+  makepkg -si
+
+  yay -S ttf-iosevka
+}
+
 install_and_setup_sudo() {
   pacman -S sudo
   echo "%wheel ALL=(ALL) ALL" > /etc/sudoers
@@ -110,6 +118,7 @@ enable_configuration() {
 install_and_setup_grub
 install_xorg
 install_additional_packages
+install_yay
 install_and_setup_sudo
 set_date_time
 set_locale
