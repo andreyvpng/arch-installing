@@ -89,7 +89,7 @@ mount -t proc none /mnt/proc
 cp post-install.sh /mnt/post-install.sh
 echo "POST chroot"
 read hello
-chroot /mnt /post-install.sh
+chroot /mnt
 
 #rm /mnt/install-2.sh
 

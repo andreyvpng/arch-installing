@@ -28,6 +28,7 @@ install_additional_packages() {
             redshift \
             xss-lock \
             i3lock-color \
+            i3blocks \
             rxvt-unicode \
             rofi \
             qutebrowser \
@@ -37,9 +38,15 @@ install_additional_packages() {
             networkmanager \
             tor
 
+  pacman -S usbutils usb_modeswitch
+
   pacman -S telegram-desktop
 
   pacman -S ntfs-3g
+}
+
+install_vm_packages() {
+  pacman -S virtualbox-guest-utils xf86-video-vmware
 }
 
 install_and_setup_sudo() {
@@ -78,11 +85,26 @@ setup_users() {
 }
 
 enable_services() {
+  # https://gist.github.com/magnetikonline/b6255da90606fe9c5c25d3333c98c90d
+  touch /etc/systemd/user/ssh-agent.service
+  echo "
+[Unit]
+Description=SSH authentication agent
+
+[Service]
+ExecStart=/usr/bin/ssh-agent -a %t/ssh-agent.socket -D
+Type=simple
+
+[Install]
+WantedBy=default.target
+}" >> /etc/systemd/user/ssh-agent.service
+
+  systemctl enable ssh-agent.service
   systemctl enable networkmanager.service
 }
-
 enable_configuration() {
-  echo "TODO"
+  git clone https://github.com/andreyvpng/dotmanager
+  mv dotmanager/dotmanager /usr/bin/
 }
 
 install_and_setup_grub
@@ -97,4 +119,5 @@ set_hostname
 mkinitcpio -P
 
 setup_users
+enable_services
 enable_configuration
