@@ -1,0 +1,139 @@
+# syncing system datetime
+timedatectl set-ntp true
+
+# getting latest mirrors for italy and germany
+wget -O mirrorlist "https://www.archlinux.org/mirrorlist/?country=RU&protocol=https&ip_version=4"
+sed -ie 's/^.//g' ./mirrorlist
+mv ./mirrorlist /etc/pacman.d/mirrorlist
+
+# updating mirrors
+pacman -Syyy
+
+# to create the partitions programatically (rather than manually)
+# https://superuser.com/a/984637
+sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk "/dev/sda"
+  o # clear the in memory partition table
+  n # new partition
+  p # primary partition
+  1 # partition number 1
+    # default - start at beginning of disk 
+  +512M # 512 MB boot parttion
+  n # new partition
+  p # primary partition
+  2 # partion number 2
+    # default, start immediately after preceding partition
+  +4G # 4 GB swap parttion
+  n # new partition
+  p # primary partition
+  3 # partion number 3
+    # default, start immediately after preceding partition
+    # default, extend partition to end of disk
+  a # make a partition bootable
+  1 # bootable partition is partition 1 -- /dev/sda1
+  p # print the in-memory partition table
+  w # write the partition table
+  q # and we're done
+EOF
+
+# partition filesystem formatting
+yes | mkfs.fat -F32 /dev/sda1
+yes | mkfs.ext4 /dev/sda2
+yes | mkfs.ext4 /dev/sda3
+
+# Mount the partitions
+mount /dev/sda3 /mnt
+mkdir -pv /mnt/boot/efi
+mount /dev/sda1 /mnt/boot/efi
+mkswap /dev/sda2
+swapon /dev/sda2
+
+pacstrap /mnt base base-devel linux linux-firmware linux-headers vim neovim ranger\
+  tmux openssh git zip unzip unrar xorg xorg-server xorg-xinit\
+  xf86-video-intel xorg-xrdb xorg-xrandr i3-gaps feh nitrogen xfce4-power-manager\
+  compton redshift xss-lock i3lock-color i3blocks rxvt-unicode rofi qutebrowser\
+  maim arc-gtk-theme keepassxc networkmanager tor usbutils usb_modeswitch telegram-desktop\
+  ntfs-3g grub efibootmgr wget xclip pulseaudio pasystray firefox pamixer wget \
+  papirus-icon-theme sudo virtualbox-quest-utils xf86-video-vmware
+
+# generating fstab
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# setting right timezone
+arch-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Vladivostok /etc/localtime
+
+# synchronizing timer
+arch-chroot /mnt hwclock --systohc
+
+# enabling font presets for better font rendering
+arch-chroot /mnt ln -s /etc/fonts/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d
+arch-chroot /mnt ln -s /etc/fonts/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d
+arch-chroot /mnt ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d
+
+# localizing system
+arch-chroot /mnt sed -ie 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/g' /etc/locale.gen
+arch-chroot /mnt sed -ie 's/#en_US ISO-8859-1/en_US ISO-8859-1/g' /etc/locale.gen
+
+# generating locale
+arch-chroot /mnt locale-gen
+
+# setting system language
+arch-chroot /mnt echo "LANG=en_US.UTF-8" >> /mnt/etc/locale.conf
+
+# setting machine name
+arch-chroot /mnt echo "machine" >> /mnt/etc/hostname
+
+# setting hosts file
+arch-chroot /mnt echo "127.0.0.1 localhost" >> /mnt/etc/hosts
+arch-chroot /mnt echo "::1 localhost" >> /mnt/etc/hosts
+arch-chroot /mnt echo "127.0.1.1 machine.localdomain machine" >> /mnt/etc/hosts
+
+# making sudoers do sudo stuff without requiring password typing
+arch-chroot /mnt sed -ie 's/# %wheel ALL=(ALL) NOPASSWD: ALL/%wheel ALL=(ALL) NOPASSWD: ALL/g' /etc/sudoers
+
+# make initframs
+arch-chroot /mnt mkinitcpio -p linux
+
+# setting root password
+arch-chroot /mnt sudo -u root /bin/bash -c 'echo "Insert root password: " && read root_password && echo -e "$root_password\n$root_password" | passwd root'
+
+# making user andrey
+arch-chroot /mnt useradd -m -G wheel -s /bin/bash andrey
+
+# setting andrey password
+arch-chroot /mnt sudo -u root /bin/bash -c 'echo "Insert anrey password: " && read andrey_password && echo -e "$andrey_password\n$andrey_password" | passwd andrey'
+
+# grub setup
+arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=arch
+arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+
+# making services start at boot
+arch-chroot /mnt systemctl enable NetworkManager.service
+
+# installing yay
+arch-chroot /mnt sudo -u andrey git clone https://aur.archlinux.org/yay.git /home/andrey/yay_tmp_install
+arch-chroot /mnt sudo -u andrey /bin/andrey -c "cd /home/andrey/yay_tmp_install && yes | makepkg -si"
+arch-chroot /mnt rm -rf /home/andrey/yay_tmp_install
+
+# installing various packages from AUR
+arch-chroot /mnt sudo -u andrey yay -S ttf-iosevka --noconfirm
+
+# setup dotmanager
+arch-chroot /mnt sudo -u andrey git clone https://github.com/andreyvpng/dotmanager /home/andrey/github/dotmanager
+arch-chroot /mnt sudo -u andrey cp /home/andrey/github/dotmanager/dotmanager /usr/bin/dotmanager
+
+# setup configurations
+arch-chroot /mnt sudo -u andrey git clone https://github.com/andreyvpng/dot /home/andrey/github/dot
+arch-chroot /mnt sudo -u andrey cd /home/andrey/github/dot && ./install
+
+# create folder for screenshots
+arch-chroot /mnt sudo -u mrcz mkdir /home/mrcz/Screenshots
+
+# unmounting all mounted partitions
+umount -R /mnt
+
+# syncing disks
+sync
+
+echo ""
+echo "INSTALLATION COMPLETE! enjoy :)"
+echo ""
